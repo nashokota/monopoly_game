@@ -75,8 +75,9 @@ class GameEngine:
                 
                 if prop.owner is not None and prop.owner != current_player:
                     # Pay fare
-                    fare = state.pay_fare(current_player, prop)
+                    fare, fare_details = state.pay_fare(current_player, prop)
                     turn_info["fare_paid"] = fare
+                    turn_info["fare_details"] = fare_details
                 elif prop.owner is None:
                     # Can buy - ask agent for decision
                     action = agent.choose_action(state)

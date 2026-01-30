@@ -42,6 +42,24 @@ const getBoardPosition = (index) => {
   return { row: index - 29, col: 11 };
 };
 
+// Building icons component
+const BuildingIcons = ({ count, owner }) => {
+  if (!count || count === 0) return null;
+  
+  const buildingColor = owner === 0 ? '#00d4ff' : '#ff6b6b';
+  const buildings = [];
+  
+  for (let i = 0; i < Math.min(count, 4); i++) {
+    buildings.push(
+      <span key={i} className="building-icon" style={{ color: buildingColor }}>
+        🏠
+      </span>
+    );
+  }
+  
+  return <div className="buildings-container">{buildings}</div>;
+};
+
 // Tile component with distinct color styling
 const Tile = ({ tile, players, currentPlayer }) => {
   const pos = getBoardPosition(tile.index);
@@ -56,19 +74,33 @@ const Tile = ({ tile, players, currentPlayer }) => {
   let borderColor = propertyColor;
   let boxShadow = 'none';
   
+  // Enhanced glow for properties with buildings
+  const buildingGlow = tile.buildings > 0 ? `, 0 0 ${8 + tile.buildings * 4}px rgba(255, 215, 0, ${0.3 + tile.buildings * 0.1})` : '';
+  
   if (tile.owner === 0) {
     backgroundColor = 'rgba(0, 212, 255, 0.35)';
     borderColor = '#00d4ff';
-    boxShadow = '0 0 12px rgba(0, 212, 255, 0.6), inset 0 0 20px rgba(0, 212, 255, 0.2)';
+    boxShadow = `0 0 12px rgba(0, 212, 255, 0.6), inset 0 0 20px rgba(0, 212, 255, 0.2)${buildingGlow}`;
   } else if (tile.owner === 1) {
     backgroundColor = 'rgba(255, 107, 107, 0.35)';
     borderColor = '#ff6b6b';
-    boxShadow = '0 0 12px rgba(255, 107, 107, 0.6), inset 0 0 20px rgba(255, 107, 107, 0.2)';
+    boxShadow = `0 0 12px rgba(255, 107, 107, 0.6), inset 0 0 20px rgba(255, 107, 107, 0.2)${buildingGlow}`;
   } else if (tile.type === 'gamble') {
     backgroundColor = 'linear-gradient(135deg, #ffd700, #ff8c00)';
     borderColor = '#ffd700';
     boxShadow = '0 0 15px rgba(255, 215, 0, 0.5)';
+  } else if (tile.type === 'start') {
+    backgroundColor = 'linear-gradient(135deg, #00ff88, #00cc66)';
+    borderColor = '#00ff88';
+    boxShadow = '0 0 20px rgba(0, 255, 136, 0.6)';
   }
+
+  // Calculate effective fare with buildings
+  const baseFare = tile.fare || 0;
+  const hasMonopoly = tile.owner !== null && tile.owner !== undefined;
+  const effectiveFare = hasMonopoly && tile.buildings > 0 
+    ? Math.floor(baseFare * 2 * (1 + 0.2 * tile.buildings))
+    : hasMonopoly ? baseFare * 2 : baseFare;
 
   const style = {
     gridRow: pos.row,
@@ -79,16 +111,25 @@ const Tile = ({ tile, players, currentPlayer }) => {
     boxShadow: boxShadow,
   };
 
+  const tooltipText = `${tile.name}${tile.type === 'start' ? ' - Collect $400 when passing' : ''}${tile.color ? ` (${tile.color})` : ''}${tile.price ? ` - $${tile.price}` : ''}${tile.fare ? ` | Base Fare: $${tile.fare}` : ''}${tile.buildings > 0 ? ` | Buildings: ${tile.buildings}` : ''}${effectiveFare > baseFare ? ` | Effective Fare: $${effectiveFare}` : ''}${tile.owner !== undefined && tile.owner !== null ? ` | Owned by Player ${tile.owner + 1}` : ''}`;
+
   return (
     <div 
-      className={`tile ${tile.type} ${tile.owner === 0 ? 'owned-blue' : ''} ${tile.owner === 1 ? 'owned-red' : ''}`}
+      className={`tile ${tile.type} ${tile.owner === 0 ? 'owned-blue' : ''} ${tile.owner === 1 ? 'owned-red' : ''} ${tile.buildings > 0 ? 'has-buildings' : ''}`}
       style={style}
-      title={`${tile.name}${tile.color ? ` (${tile.color})` : ''}${tile.price ? ` - $${tile.price}` : ''}${tile.fare ? ` | Fare: $${tile.fare}` : ''}${tile.owner !== undefined && tile.owner !== null ? ` | Owned by Player ${tile.owner + 1}` : ''}`}
+      title={tooltipText}
     >
       <div className="tile-color-bar" style={{ backgroundColor: propertyColor }}></div>
-      <div className="tile-name">{tile.name}</div>
+      <BuildingIcons count={tile.buildings} owner={tile.owner} />
+      <div className="tile-name">{tile.type === 'start' ? '🚀 GO' : tile.name}</div>
+      {tile.type === 'start' && <div className="tile-fare">+$400</div>}
       {tile.price && <div className="tile-price">${tile.price}</div>}
-      {tile.fare && <div className="tile-fare">🏠${tile.fare}</div>}
+      {tile.fare && (
+        <div className={`tile-fare ${tile.buildings > 0 ? 'boosted' : ''}`}>
+          🏠${tile.buildings > 0 ? effectiveFare : tile.fare}
+          {tile.buildings > 0 && <span className="building-bonus">+{tile.buildings}🏗️</span>}
+        </div>
+      )}
       {player0Here && <div className="player-marker player-0">🔵</div>}
       {player1Here && <div className="player-marker player-1">🔴</div>}
     </div>
@@ -142,6 +183,12 @@ const PlayerStats = ({ playerStats, agents, currentPlayer }) => {
               </div>
               <div className="stat-details">
                 {stats.propertyCount} properties • ${stats.propertyValue} value
+                {stats.buildingCount > 0 && (
+                  <span className="building-stat"> • 🏗️{stats.buildingCount} buildings</span>
+                )}
+                {stats.monopolies > 0 && (
+                  <span className="monopoly-stat"> • ⭐{stats.monopolies} monopolies</span>
+                )}
               </div>
             </div>
             <div className="stat-cash">${stats.cash}</div>
@@ -163,7 +210,16 @@ const GameLog = ({ history }) => {
             <span className="log-turn">T{entry.turn}</span> P{entry.player + 1}: 
             Rolled {entry.diceRoll} → Pos {entry.newPosition}
             {entry.action && ` [${entry.action}]`}
-            {entry.farePaid && ` Paid $${entry.farePaid}`}
+            {entry.assetsSold && entry.assetsSold.length > 0 && (
+              <span className="sold-assets">
+                {' '}💰 Sold: {entry.assetsSold.map((a, i) => 
+                  `${a.type === 'building' ? '🏗️' : '🏠'}${a.property} ($${a.value})`
+                ).join(', ')}
+              </span>
+            )}
+            {entry.farePaid !== undefined && entry.farePaid > 0 && ` Paid $${entry.farePaid}`}
+            {entry.fareDetails?.buildingBonus > 0 && ` (+$${entry.fareDetails.buildingBonus} building fee)`}
+            {entry.buildings && entry.buildings.length > 0 && ` 🏗️ Built on ${entry.buildings.map(b => b.property).join(', ')}`}
             {entry.gambleEffect && ` 🎰 ${entry.gambleEffect.name || entry.gambleEffect}`}
           </div>
         ))}

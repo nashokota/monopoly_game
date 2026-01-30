@@ -5,7 +5,7 @@ const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const PYTHON_API = process.env.PYTHON_API || 'http://localhost:5000';
+const PYTHON_API = process.env.PYTHON_API || 'http://localhost:5002';
 
 // Middleware
 app.use(cors());

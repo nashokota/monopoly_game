@@ -192,6 +192,8 @@ def play_turn(game_id: str):
         "agent": agent.get_name(),
         "initialCash": state.cash.copy(),
         "initialPosition": state.positions[current_player],
+        "buildings": [],
+        "assetsSold": []
     }
     
     # Roll dice
@@ -219,12 +221,48 @@ def play_turn(game_id: str):
                 "color": prop.color,
                 "price": prop.price,
                 "fare": prop.fare,
-                "owner": prop.owner
+                "owner": prop.owner,
+                "buildings": prop.buildings
             }
             
             if prop.owner is not None and prop.owner != current_player:
-                fare = state.pay_fare(current_player, prop)
-                turn_info["farePaid"] = fare
+                # Calculate fare first to check if player needs to sell assets
+                fare_owed, fare_details = state.calculate_fare(current_player, prop)
+                turn_info["fareDetails"] = fare_details
+                
+                # Check if player can't afford fare and needs to sell assets
+                if fare_owed > state.cash[current_player]:
+                    # Agent needs to sell assets to pay fare
+                    sell_actions = agent.choose_asset_to_sell(state, fare_owed)
+                    
+                    for sell_action in sell_actions:
+                        if sell_action["type"] == "SELL_BUILDING":
+                            sell_prop = state.get_property_at(sell_action["property_index"])
+                            if sell_prop:
+                                actual_value = state.sell_building(current_player, sell_prop)
+                                turn_info["assetsSold"].append({
+                                    "type": "building",
+                                    "property": sell_action["property_name"],
+                                    "value": actual_value
+                                })
+                        elif sell_action["type"] == "SELL_PROPERTY":
+                            sell_prop = state.get_property_at(sell_action["property_index"])
+                            if sell_prop:
+                                actual_value = state.sell_property(current_player, sell_prop)
+                                turn_info["assetsSold"].append({
+                                    "type": "property",
+                                    "property": sell_action["property_name"],
+                                    "value": actual_value
+                                })
+                        
+                        # Check if we have enough cash now
+                        if state.cash[current_player] >= fare_owed:
+                            break
+                
+                # Now pay the fare (might still be partial if couldn't sell enough)
+                fare_paid, _ = state.pay_fare(current_player, prop)
+                turn_info["farePaid"] = fare_paid
+                
             elif prop.owner is None:
                 action = agent.choose_action(state)
                 turn_info["action"] = action
@@ -233,6 +271,25 @@ def play_turn(game_id: str):
                 if action == "BUY":
                     state.buy_property(current_player, prop)
                     turn_info["propertyBought"] = prop.name
+    
+    # After main action, AI can choose to build if it has monopolies
+    build_actions = state.get_build_actions(current_player)
+    if build_actions:
+        action = agent.choose_action(state)
+        if action.startswith("BUILD_"):
+            try:
+                prop_index = int(action.split("_")[1])
+                build_prop = state.get_property_at(prop_index)
+                if build_prop and state.build_on_property(current_player, build_prop):
+                    turn_info["buildings"].append({
+                        "property": build_prop.name,
+                        "index": prop_index,
+                        "newBuildingCount": build_prop.buildings,
+                        "cost": state.get_building_cost(build_prop)
+                    })
+                    state.last_action = f"Built on {build_prop.name}"
+            except (ValueError, IndexError):
+                pass
     
     turn_info["finalCash"] = state.cash.copy()
     

@@ -4,21 +4,38 @@ A Monopoly-style game featuring **Dhaka city neighborhoods** where two AI agents
 
 ## Game Rules
 
-- **40 boxes** total: 36 Dhaka neighborhoods (9 districts × 4 each) + 4 landmark gambling tiles
+- **40 boxes** total: 1 GO tile + 35 Dhaka neighborhoods (8 districts × 4 + 1 district × 3) + 4 landmark gambling tiles
 - Each agent starts with **$1500**
 - Earn **$400 bonus** for passing GO
 - Roll dice (2-12) to move around the board
 - **Buy** unowned properties or **skip**
-- **Pay fare** when landing on opponent's property (double if they own all of that district)
+- **Pay fare** when landing on opponent's property (**2x fare** if they own all properties of that district!)
 - **Gambling tiles** (Hatirjheel, Ahsan Manzil, Parliament, Dhaka University) trigger random effects
 - Game ends when all properties are sold and turn limit reached, or a player goes bankrupt
-- **Winner** is the player with more total wealth (cash + property value)
+- **Winner** is the player with more total wealth (cash + property value + building value)
+
+## 🏗️ Building System
+
+Once a player owns **all properties of a color** (monopoly), they can build on those properties:
+
+| Feature | Details |
+|---------|---------|
+| **Build Cost** | 110% of property price |
+| **Max Buildings** | 4 per property |
+| **Fare Bonus** | +20% per building on the effective fare |
+| **Effective Fare** | Base fare × 2 (monopoly) × (1 + 0.2 × buildings) |
+
+**Example:** A property with $100 fare, monopoly, and 3 buildings:
+- Base fare: $100
+- With monopoly: $200 (2×)
+- With 3 buildings: $200 × 1.6 = $320 effective fare
 
 ## 🗺️ Dhaka Neighborhoods by District
 
 | Color | District | Areas |
 |-------|----------|-------|
-| 🟤 Brown | Budget Zone | Kamrangirchar, Hazaribagh, Rayerbazar, Shyamoli |
+| 🚀 GO | Start | Starting tile - Collect $400 when passing |
+| 🟤 Brown | Budget Zone | Hazaribagh, Rayerbazar, Shyamoli (3 properties) |
 | 🔵 Light Blue | Mohammadpur | Mohammadpur, Adabor, Lalmatia, Dhanmondi |
 | 🩷 Pink | Mirpur | Mirpur, Pallabi, Kazipara, Shewrapara |
 | 🟠 Orange | Uttara | Uttara, Abdullahpur, Diabari, Azampur |

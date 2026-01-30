@@ -79,7 +79,7 @@ class MCTSAgent:
         self.total_simulations = 0
         
         # Learning: track action values across games
-        self.action_stats = {"BUY": {"wins": 0, "games": 0}, "SKIP": {"wins": 0, "games": 0}}
+        self.action_stats = {"BUY": {"wins": 0, "games": 0}, "SKIP": {"wins": 0, "games": 0}, "BUILD": {"wins": 0, "games": 0}}
     
     def get_name(self) -> str:
         return f"MCTS (sims={self.num_simulations})"
@@ -93,15 +93,25 @@ class MCTSAgent:
         if len(actions) == 1:
             return actions[0]
         
+        # Separate build actions from buy/skip actions
+        build_actions = [a for a in actions if a.startswith("BUILD_")]
+        base_actions = [a for a in actions if not a.startswith("BUILD_")]
+        
+        # Check for build opportunities first
+        if build_actions and state.cash[self.player_id] > 300:
+            best_build = self._choose_best_build(state, build_actions)
+            if best_build:
+                return best_build
+        
         # Strategic overrides for critical decisions
         override = self._check_strategic_override(state)
         if override:
             return override
         
-        # Create root node with prior values
+        # Create root node with prior values (only for base actions)
         root = MCTSNode(
             state=state.copy(),
-            untried_actions=actions.copy(),
+            untried_actions=base_actions.copy(),
             player=self.player_id
         )
         
@@ -123,7 +133,7 @@ class MCTSAgent:
         
         # Choose best action (most visited with value consideration)
         if not root.children:
-            return random.choice(actions)
+            return random.choice(base_actions) if base_actions else "SKIP"
         
         # Use a combination of visits and value for final selection
         best_child = max(root.children, key=lambda c: c.visits + c.total_reward)
@@ -132,6 +142,172 @@ class MCTSAgent:
         self._update_action_stats(best_child.action, state)
         
         return best_child.action
+    
+    def _choose_best_build(self, state: GameState, build_actions: list) -> Optional[str]:
+        """Choose the best property to build on based on strategic value"""
+        if not build_actions:
+            return None
+        
+        best_action = None
+        best_value = 0
+        
+        for action in build_actions:
+            try:
+                prop_index = int(action.split("_")[1])
+                prop = state.get_property_at(prop_index)
+                if prop:
+                    # Value based on: fare increase, property location, current buildings
+                    build_cost = state.get_building_cost(prop)
+                    fare_increase = prop.fare * 0.4  # 20% of doubled fare
+                    if state.has_monopoly(self.player_id, prop.color):
+                        fare_increase *= 2  # Monopoly doubles base
+                    
+                    # Prefer properties with fewer buildings (more room to grow)
+                    build_priority = (4 - prop.buildings) * 10
+                    
+                    # Prefer higher-value properties
+                    value = fare_increase + build_priority + (prop.fare / 10)
+                    
+                    # Only build if we have enough cash reserve
+                    if state.cash[self.player_id] - build_cost > 150 and value > best_value:
+                        best_value = value
+                        best_action = action
+            except (ValueError, IndexError):
+                continue
+        
+        return best_action
+    
+    def choose_asset_to_sell(self, state: GameState, amount_needed: int) -> List[dict]:
+        """
+        Intelligently choose which assets to sell when facing bankruptcy.
+        Prioritizes selling:
+        1. Buildings on low-value properties first
+        2. Properties that don't contribute to monopolies
+        3. Lower-value properties before higher-value ones
+        Returns list of sell actions to perform in order.
+        """
+        sell_actions = []
+        current_cash = state.cash[self.player_id]
+        temp_state = state.copy()
+        
+        while current_cash < amount_needed:
+            # First, try to sell buildings (prefer selling from low-value properties)
+            sellable_buildings = temp_state.get_sellable_buildings(self.player_id)
+            if sellable_buildings:
+                # Score each building for selling (lower score = better to sell)
+                best_to_sell = None
+                best_score = float('inf')
+                
+                for prop in sellable_buildings:
+                    score = self._calculate_building_keep_value(temp_state, prop)
+                    if score < best_score:
+                        best_score = score
+                        best_to_sell = prop
+                
+                if best_to_sell:
+                    sell_value = temp_state.get_sell_building_value(best_to_sell)
+                    current_cash += sell_value
+                    sell_actions.append({
+                        "type": "SELL_BUILDING",
+                        "property_index": best_to_sell.index,
+                        "property_name": best_to_sell.name,
+                        "value": sell_value
+                    })
+                    # Simulate the sale in temp state
+                    temp_state.sell_building(self.player_id, best_to_sell)
+                    continue
+            
+            # If no buildings to sell, sell properties
+            sellable_props = temp_state.get_sellable_properties(self.player_id)
+            if sellable_props:
+                # Score each property for selling (lower score = better to sell)
+                best_to_sell = None
+                best_score = float('inf')
+                
+                for prop in sellable_props:
+                    score = self._calculate_property_keep_value(temp_state, prop)
+                    if score < best_score:
+                        best_score = score
+                        best_to_sell = prop
+                
+                if best_to_sell:
+                    sell_value = temp_state.get_sell_property_value(best_to_sell)
+                    current_cash += sell_value
+                    sell_actions.append({
+                        "type": "SELL_PROPERTY",
+                        "property_index": best_to_sell.index,
+                        "property_name": best_to_sell.name,
+                        "value": sell_value
+                    })
+                    # Simulate the sale in temp state
+                    temp_state.sell_property(self.player_id, best_to_sell)
+                    continue
+            
+            # No more assets to sell
+            break
+        
+        return sell_actions
+    
+    def _calculate_building_keep_value(self, state: GameState, prop) -> float:
+        """
+        Calculate how valuable it is to KEEP a building (higher = more valuable to keep).
+        Lower score means we should sell this building first.
+        """
+        value = 0
+        
+        # Higher fare = more valuable to keep
+        value += prop.fare * 2
+        
+        # If we have monopoly, buildings are more valuable
+        if state.has_monopoly(self.player_id, prop.color):
+            value += 200
+        
+        # Properties on expensive colors are more valuable
+        value += prop.price / 2
+        
+        # More buildings on same property = each one less critical
+        value -= (prop.buildings - 1) * 20
+        
+        return value
+    
+    def _calculate_property_keep_value(self, state: GameState, prop) -> float:
+        """
+        Calculate how valuable it is to KEEP a property (higher = more valuable to keep).
+        Lower score means we should sell this property first.
+        """
+        value = 0
+        opponent = 1 - self.player_id
+        
+        # Base value from fare potential
+        value += prop.fare * 3
+        
+        # Check monopoly status
+        player_props = state.get_player_properties(self.player_id)
+        same_color = [p for p in player_props if p.color == prop.color]
+        total_in_color = len([p for p in state.properties if p.color == prop.color])
+        
+        # If selling breaks a monopoly, HUGE penalty (don't sell!)
+        if len(same_color) == total_in_color:
+            value += 1000
+        
+        # If we have 3 out of 4 (close to monopoly), don't sell
+        if len(same_color) == total_in_color - 1:
+            value += 500
+        
+        # If opponent has other properties of same color, blocking value
+        opp_props = state.get_player_properties(opponent)
+        opp_same_color = [p for p in opp_props if p.color == prop.color]
+        if opp_same_color:
+            # This property blocks opponent's monopoly!
+            value += 300 * len(opp_same_color)
+        
+        # Higher value properties are better to keep
+        value += prop.price
+        
+        # Higher fare properties are better to keep
+        value += prop.fare * 5
+        
+        return value
     
     def _check_strategic_override(self, state: GameState) -> Optional[str]:
         """
