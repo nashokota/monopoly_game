@@ -413,4 +413,4 @@ if __name__ == '__main__':
     print("  POST /api/game/<id>/fast-forward - Play multiple turns")
     print("  POST /api/simulate - Run tournament simulation")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5002, debug=True)

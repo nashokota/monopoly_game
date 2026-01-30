@@ -168,77 +168,116 @@ body {
 .tile {
   position: relative;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  font-size: 0.6rem;
+  border-radius: 6px;
+  font-size: 0.55rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   text-align: center;
-  padding: 2px;
-  transition: transform 0.2s;
+  padding: 3px 2px;
+  transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
-  min-height: 50px;
+  min-height: 55px;
+  overflow: hidden;
 }
 
 .tile:hover {
-  transform: scale(1.05);
+  transform: scale(1.1);
   z-index: 10;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
 }
 
 .tile.property {
-  border-left: 4px solid;
+  border-radius: 6px;
+}
+
+.tile-color-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  border-radius: 6px 6px 0 0;
 }
 
 .tile.owned-blue {
-  background: rgba(0, 212, 255, 0.4) !important;
+  background: rgba(0, 212, 255, 0.35) !important;
   border: 2px solid #00d4ff !important;
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.6), inset 0 0 15px rgba(0, 212, 255, 0.15);
 }
 
 .tile.owned-red {
-  background: rgba(255, 107, 107, 0.4) !important;
+  background: rgba(255, 107, 107, 0.35) !important;
   border: 2px solid #ff6b6b !important;
-  box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
+  box-shadow: 0 0 12px rgba(255, 107, 107, 0.6), inset 0 0 15px rgba(255, 107, 107, 0.15);
 }
 
 .tile.gamble {
-  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  background: linear-gradient(135deg, #ffd700, #ff8c00) !important;
   color: #000;
+  font-weight: bold;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
 }
 
 .tile-name {
-  font-size: 0.5rem;
-  line-height: 1.1;
+  font-size: 0.48rem;
+  line-height: 1.15;
   max-width: 100%;
   overflow: hidden;
+  margin-top: 10px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .tile-price {
   font-size: 0.5rem;
   color: #7fff00;
   font-weight: bold;
+  margin-top: 2px;
+}
+
+.tile-fare {
+  font-size: 0.42rem;
+  color: #ffa500;
+  margin-top: 1px;
 }
 
 .player-marker {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  border: 2px solid white;
   z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
 }
 
 .player-marker.player-0 {
-  background: #00d4ff;
-  top: 2px;
-  left: 2px;
+  background: rgba(0, 212, 255, 0.9);
+  border: 2px solid #fff;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
+  box-shadow: 0 0 8px #00d4ff;
 }
 
 .player-marker.player-1 {
-  background: #ff6b6b;
-  bottom: 2px;
-  right: 2px;
+  background: rgba(255, 107, 107, 0.9);
+  border: 2px solid #fff;
+  top: 50%;
+  right: 3px;
+  transform: translateY(-50%);
+  box-shadow: 0 0 8px #ff6b6b;
 }
 
 .ownership-indicator {
@@ -262,12 +301,20 @@ body {
 
 .center-title {
   font-family: 'Orbitron', monospace;
-  font-size: 1.5rem;
-  background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+  font-size: 1.4rem;
+  background: linear-gradient(90deg, #00d4ff, #7b2cbf, #ff6b6b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
+  text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+}
+
+.center-subtitle {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  margin-bottom: 15px;
+  letter-spacing: 2px;
 }
 
 .dice-display {

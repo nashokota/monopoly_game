@@ -50,42 +50,50 @@ GAMBLE_EFFECTS = [
     GambleEffect("Nothing", "Nothing happens", "cash_change", 0),
 ]
 
-# Color configuration for properties
+# Color configuration for properties - Dhaka City Areas
+# Each color group represents a district/zone with 4 neighborhoods
 COLORS = [
-    ("Brown", 60, 30),      # (color, base_price, base_fare)
-    ("Light Blue", 80, 40),
-    ("Pink", 100, 50),
-    ("Orange", 120, 60),
-    ("Red", 150, 75),
-    ("Yellow", 180, 90),
-    ("Green", 220, 110),
-    ("Dark Blue", 280, 140),
-    ("Purple", 320, 160),
+    ("Brown", 60, 30, ["Kamrangirchar", "Hazaribagh", "Rayerbazar", "Shyamoli"]),
+    ("Light Blue", 80, 40, ["Mohammadpur", "Adabor", "Lalmatia", "Dhanmondi"]),
+    ("Pink", 100, 50, ["Mirpur", "Pallabi", "Kazipara", "Shewrapara"]),
+    ("Orange", 120, 60, ["Uttara", "Abdullahpur", "Diabari", "Azampur"]),
+    ("Red", 150, 75, ["Banani", "Gulshan", "Baridhara", "Niketan"]),
+    ("Yellow", 180, 90, ["Tejgaon", "Farmgate", "Karwan Bazar", "Bijoy Sarani"]),
+    ("Green", 220, 110, ["Motijheel", "Paltan", "Kakrail", "Ramna"]),
+    ("Dark Blue", 280, 140, ["Old Dhaka", "Lalbagh", "Chawkbazar", "Sadarghat"]),
+    ("Purple", 320, 160, ["Bashundhara", "Aftabnagar", "Badda", "Rampura"]),
 ]
 
-# Gamble tile positions (4 positions out of 40)
+# Gamble tile positions (4 positions out of 40) - Special Dhaka locations
 GAMBLE_POSITIONS = [9, 19, 29, 39]
+GAMBLE_NAMES = ["Hatirjheel Lake", "Ahsan Manzil", "National Parliament", "Dhaka University"]
 
 def create_board() -> Tuple[List[dict], List[Property], List[GambleTile]]:
-    """Create the game board with 36 properties and 4 gamble tiles"""
+    """Create the game board with 36 Dhaka properties and 4 landmark gamble tiles"""
     board = []
     properties = []
     gamble_tiles = []
     
     property_idx = 0
+    gamble_idx = 0
     
     for i in range(40):
         if i in GAMBLE_POSITIONS:
+            gamble_name = GAMBLE_NAMES[gamble_idx]
             tile = {
                 "index": i,
                 "type": TileType.GAMBLE.value,
-                "name": f"Gamble Zone {len(gamble_tiles) + 1}"
+                "name": gamble_name
             }
-            gamble_tiles.append(GambleTile(i, tile["name"]))
+            gamble_tiles.append(GambleTile(i, gamble_name))
+            gamble_idx += 1
         else:
             color_idx = property_idx // 4
-            color_name, base_price, base_fare = COLORS[color_idx]
+            color_name, base_price, base_fare, area_names = COLORS[color_idx]
             position_in_color = property_idx % 4
+            
+            # Get the specific Dhaka area name
+            area_name = area_names[position_in_color]
             
             # Slightly vary prices within same color
             price = base_price + (position_in_color * 10)
@@ -93,7 +101,7 @@ def create_board() -> Tuple[List[dict], List[Property], List[GambleTile]]:
             
             prop = Property(
                 index=i,
-                name=f"{color_name} Property {position_in_color + 1}",
+                name=area_name,
                 color=color_name,
                 price=price,
                 fare=fare
@@ -103,7 +111,7 @@ def create_board() -> Tuple[List[dict], List[Property], List[GambleTile]]:
             tile = {
                 "index": i,
                 "type": TileType.PROPERTY.value,
-                "name": prop.name,
+                "name": area_name,
                 "color": prop.color,
                 "price": prop.price,
                 "fare": prop.fare,

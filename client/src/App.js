@@ -11,6 +11,19 @@ const AGENT_OPTIONS = [
   { id: 'hybrid_mcts', name: 'Hybrid MCTS', description: 'MCTS with heuristic cutoff. Balanced approach.' }
 ];
 
+// Color scheme for property groups (Dhaka city districts)
+const COLOR_HEX_MAP = {
+  'Brown': '#8B4513',
+  'Light Blue': '#87CEEB',
+  'Pink': '#FF69B4',
+  'Orange': '#FF8C00',
+  'Red': '#DC143C',
+  'Yellow': '#FFD700',
+  'Green': '#228B22',
+  'Dark Blue': '#191970',
+  'Purple': '#8B008B'
+};
+
 // Board position calculation for visual layout
 const getBoardPosition = (index) => {
   // Bottom row: 0-10 (left to right)
@@ -29,40 +42,55 @@ const getBoardPosition = (index) => {
   return { row: index - 29, col: 11 };
 };
 
-// Tile component
+// Tile component with distinct color styling
 const Tile = ({ tile, players, currentPlayer }) => {
   const pos = getBoardPosition(tile.index);
   const player0Here = players[0] === tile.index;
   const player1Here = players[1] === tile.index;
 
-  // Determine background color based on ownership
-  let backgroundColor = 'rgba(255, 255, 255, 0.1)'; // Default
+  // Get the color for the property group
+  const propertyColor = tile.color ? COLOR_HEX_MAP[tile.color] : '#444';
+  
+  // Determine background and border based on ownership
+  let backgroundColor = 'rgba(255, 255, 255, 0.08)';
+  let borderColor = propertyColor;
+  let boxShadow = 'none';
+  
   if (tile.owner === 0) {
-    backgroundColor = 'rgba(0, 212, 255, 0.4)'; // Blue for player 0
+    backgroundColor = 'rgba(0, 212, 255, 0.35)';
+    borderColor = '#00d4ff';
+    boxShadow = '0 0 12px rgba(0, 212, 255, 0.6), inset 0 0 20px rgba(0, 212, 255, 0.2)';
   } else if (tile.owner === 1) {
-    backgroundColor = 'rgba(255, 107, 107, 0.4)'; // Red for player 1
+    backgroundColor = 'rgba(255, 107, 107, 0.35)';
+    borderColor = '#ff6b6b';
+    boxShadow = '0 0 12px rgba(255, 107, 107, 0.6), inset 0 0 20px rgba(255, 107, 107, 0.2)';
   } else if (tile.type === 'gamble') {
     backgroundColor = 'linear-gradient(135deg, #ffd700, #ff8c00)';
+    borderColor = '#ffd700';
+    boxShadow = '0 0 15px rgba(255, 215, 0, 0.5)';
   }
 
   const style = {
     gridRow: pos.row,
     gridColumn: pos.col,
-    borderLeftColor: tile.hex || '#444',
     background: backgroundColor,
-    border: tile.owner === 0 ? '2px solid #00d4ff' : tile.owner === 1 ? '2px solid #ff6b6b' : 'none'
+    borderLeft: tile.type === 'property' ? `5px solid ${propertyColor}` : 'none',
+    borderTop: tile.owner !== null && tile.owner !== undefined ? `3px solid ${borderColor}` : 'none',
+    boxShadow: boxShadow,
   };
 
   return (
     <div 
       className={`tile ${tile.type} ${tile.owner === 0 ? 'owned-blue' : ''} ${tile.owner === 1 ? 'owned-red' : ''}`}
       style={style}
-      title={`${tile.name}${tile.price ? ` - $${tile.price}` : ''}${tile.owner !== undefined && tile.owner !== null ? ` (Owned by Player ${tile.owner + 1})` : ''}`}
+      title={`${tile.name}${tile.color ? ` (${tile.color})` : ''}${tile.price ? ` - $${tile.price}` : ''}${tile.fare ? ` | Fare: $${tile.fare}` : ''}${tile.owner !== undefined && tile.owner !== null ? ` | Owned by Player ${tile.owner + 1}` : ''}`}
     >
-      <div className="tile-name">{tile.name.split(' ').slice(-2).join(' ')}</div>
+      <div className="tile-color-bar" style={{ backgroundColor: propertyColor }}></div>
+      <div className="tile-name">{tile.name}</div>
       {tile.price && <div className="tile-price">${tile.price}</div>}
-      {player0Here && <div className="player-marker player-0" />}
-      {player1Here && <div className="player-marker player-1" />}
+      {tile.fare && <div className="tile-fare">🏠${tile.fare}</div>}
+      {player0Here && <div className="player-marker player-0">🔵</div>}
+      {player1Here && <div className="player-marker player-1">🔴</div>}
     </div>
   );
 };
@@ -81,7 +109,8 @@ const GameBoard = ({ board, positions, currentPlayer, turnCount, lastDice }) => 
           />
         ))}
         <div className="center-area">
-          <div className="center-title">AI MONOPOLY</div>
+          <div className="center-title">🏙️ DHAKA MONOPOLY</div>
+          <div className="center-subtitle">AI Property Game</div>
           <div className="dice-display">🎲 {lastDice || '-'}</div>
           <div className="turn-info">
             Turn {turnCount}<br/>
@@ -319,8 +348,8 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>AI MONOPOLY</h1>
-        <p>Watch two AI agents compete in a simplified Monopoly game</p>
+        <h1>🏙️ DHAKA MONOPOLY</h1>
+        <p>Watch two AI agents compete to own Dhaka's famous neighborhoods!</p>
       </header>
 
       {!gameId ? (

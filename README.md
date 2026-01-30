@@ -1,17 +1,32 @@
-# AI Monopoly
+# 🏙️ Dhaka Monopoly - AI Property Game
 
-A simplified Monopoly-style game where two AI agents compete using different algorithms.
+A Monopoly-style game featuring **Dhaka city neighborhoods** where two AI agents compete using different algorithms. Watch AI players buy iconic areas like Gulshan, Dhanmondi, Uttara, and more!
 
 ## Game Rules
 
-- **40 boxes** total: 36 properties (9 colors × 4 each) + 4 gambling tiles
+- **40 boxes** total: 36 Dhaka neighborhoods (9 districts × 4 each) + 4 landmark gambling tiles
 - Each agent starts with **$1500**
+- Earn **$400 bonus** for passing GO
 - Roll dice (2-12) to move around the board
 - **Buy** unowned properties or **skip**
-- **Pay fare** when landing on opponent's property (double if they own all of that color)
-- **Gambling tiles** trigger random effects (win/lose money, pay/receive from opponent)
+- **Pay fare** when landing on opponent's property (double if they own all of that district)
+- **Gambling tiles** (Hatirjheel, Ahsan Manzil, Parliament, Dhaka University) trigger random effects
 - Game ends when all properties are sold and turn limit reached, or a player goes bankrupt
 - **Winner** is the player with more total wealth (cash + property value)
+
+## 🗺️ Dhaka Neighborhoods by District
+
+| Color | District | Areas |
+|-------|----------|-------|
+| 🟤 Brown | Budget Zone | Kamrangirchar, Hazaribagh, Rayerbazar, Shyamoli |
+| 🔵 Light Blue | Mohammadpur | Mohammadpur, Adabor, Lalmatia, Dhanmondi |
+| 🩷 Pink | Mirpur | Mirpur, Pallabi, Kazipara, Shewrapara |
+| 🟠 Orange | Uttara | Uttara, Abdullahpur, Diabari, Azampur |
+| 🔴 Red | Elite Zone | Banani, Gulshan, Baridhara, Niketan |
+| 🟡 Yellow | Central | Tejgaon, Farmgate, Karwan Bazar, Bijoy Sarani |
+| 🟢 Green | Business | Motijheel, Paltan, Kakrail, Ramna |
+| 🔷 Dark Blue | Old Dhaka | Old Dhaka, Lalbagh, Chawkbazar, Sadarghat |
+| 🟣 Purple | Bashundhara | Bashundhara, Aftabnagar, Badda, Rampura |
 
 ## AI Agents
 

@@ -96,21 +96,21 @@ def test_single_game():
     print("✓ Single game test passed!")
 
 def test_tournament():
-    """Test running a small tournament"""
-    print("\nTesting tournament (5 games)...")
+    """Test running a larger tournament to compare agents"""
+    print("\nTesting tournament (20 games - Enhanced MCTS vs Expectiminimax)...")
     
-    agent1 = ExpectiminimaxAgent(player_id=0, max_depth=2)
-    agent2 = MCTSAgent(player_id=1, num_simulations=50)
+    agent1 = ExpectiminimaxAgent(player_id=0, max_depth=3)
+    agent2 = MCTSAgent(player_id=1, num_simulations=500)
     
-    results = run_tournament(agent1, agent2, num_games=5, verbose=False)
+    results = run_tournament(agent1, agent2, num_games=20, verbose=False)
     
-    print(f"  {results['agent1']}: {results['wins'][0]} wins")
-    print(f"  {results['agent2']}: {results['wins'][1]} wins")
+    print(f"  {results['agent1']}: {results['wins'][0]} wins ({results['wins'][0] * 5}%)")
+    print(f"  {results['agent2']}: {results['wins'][1]} wins ({results['wins'][1] * 5}%)")
     print("✓ Tournament test passed!")
 
 if __name__ == "__main__":
     print("="*50)
-    print("AI Monopoly - Test Suite")
+    print("AI Monopoly - Agent Comparison Test")
     print("="*50)
     
     test_game_state()
