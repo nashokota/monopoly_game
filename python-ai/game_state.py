@@ -301,22 +301,49 @@ class GameState:
         """Evaluate state from player's perspective"""
         opponent = 1 - player
         
-        # Cash difference
-        cash_diff = self.cash[player] - self.cash[opponent]
+        # Total wealth (cash + property value) - this is what determines the winner
+        my_wealth = self.cash[player] + self.get_player_property_value(player)
+        opp_wealth = self.cash[opponent] + self.get_player_property_value(opponent)
+        wealth_diff = my_wealth - opp_wealth
         
-        # Property value difference
-        prop_value_diff = self.get_player_property_value(player) - self.get_player_property_value(opponent)
+        # Property count bonus - owning more properties is strategically valuable
+        my_props = len(self.get_player_properties(player))
+        opp_props = len(self.get_player_properties(opponent))
+        property_count_bonus = (my_props - opp_props) * 50
         
-        # Fare income potential
+        # Fare income potential (future earnings)
         fare_diff = self.get_player_fare_income(player) - self.get_player_fare_income(opponent)
         
-        # Count monopolies (all properties of same color)
+        # Count monopolies (all properties of same color) - very valuable
         my_monopolies = self._count_monopolies(player)
         opp_monopolies = self._count_monopolies(opponent)
-        monopoly_bonus = (my_monopolies - opp_monopolies) * 200
+        monopoly_bonus = (my_monopolies - opp_monopolies) * 300
         
-        # Weights
-        return cash_diff + 0.5 * prop_value_diff + 0.3 * fare_diff + monopoly_bonus
+        # Bonus for properties that could complete a monopoly
+        near_monopoly_bonus = self._near_monopoly_value(player) - self._near_monopoly_value(opponent)
+        
+        # Weights: prioritize wealth, then fare income, then strategic position
+        return wealth_diff + 0.8 * fare_diff + property_count_bonus + monopoly_bonus + near_monopoly_bonus
+    
+    def _near_monopoly_value(self, player: int) -> float:
+        """Calculate bonus for being close to completing monopolies"""
+        player_props = self.get_player_properties(player)
+        color_counts = {}
+        
+        for prop in player_props:
+            color_counts[prop.color] = color_counts.get(prop.color, 0) + 1
+        
+        bonus = 0
+        for color, count in color_counts.items():
+            total_in_color = len([p for p in self.properties if p.color == color])
+            # Bonus for having 3 out of 4 properties in a color
+            if count == total_in_color - 1:
+                bonus += 100
+            # Smaller bonus for having 2 out of 4
+            elif count == total_in_color - 2 and total_in_color == 4:
+                bonus += 30
+        
+        return bonus
     
     def _count_monopolies(self, player: int) -> int:
         """Count how many complete color sets a player owns"""

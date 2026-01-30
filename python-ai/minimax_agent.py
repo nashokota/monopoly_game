@@ -51,6 +51,29 @@ class ExpectiminimaxAgent:
         if len(actions) == 1:
             return actions[0]
         
+        # Get property at current position
+        pos = state.positions[self.player_id]
+        prop = state.get_property_at(pos)
+        
+        # Quick heuristic: if we can afford and have enough cash buffer, lean towards buying
+        if prop and prop.owner is None:
+            cash_after = state.cash[self.player_id] - prop.price
+            
+            # Always buy if it completes a monopoly
+            my_props = state.get_player_properties(self.player_id)
+            same_color = [p for p in my_props if p.color == prop.color]
+            total_same_color = len([p for p in state.properties if p.color == prop.color])
+            
+            if len(same_color) == total_same_color - 1:
+                return "BUY"  # Complete the monopoly!
+            
+            # Buy if we have a reasonable cash buffer
+            if cash_after >= 200:
+                # Use deeper search only when it's a close decision
+                pass  # Continue to minimax evaluation
+            elif cash_after >= 100 and prop.price <= 150:
+                return "BUY"  # Cheap property, go for it
+        
         self.nodes_evaluated = 0
         best_action = "SKIP"
         best_value = float('-inf')
@@ -67,6 +90,11 @@ class ExpectiminimaxAgent:
                 float('-inf'), 
                 float('inf')
             )
+            
+            # Add immediate benefit of buying to counteract short-term cash loss
+            if action == "BUY" and prop:
+                # Buying has long-term value that shallow search might miss
+                value += prop.fare * 2  # Expected fare income bonus
             
             if value > best_value:
                 best_value = value
