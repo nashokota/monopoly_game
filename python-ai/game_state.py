@@ -212,10 +212,15 @@ class GameState:
         return effect.description
     
     def move_player(self, player: int, dice_roll: int) -> int:
-        """Move a player by dice roll amount"""
+        """Move a player by dice roll amount. Awards $400 for passing GO."""
         old_pos = self.positions[player]
         new_pos = (old_pos + dice_roll) % 40
         self.positions[player] = new_pos
+        
+        # Check if player passed GO (crossed position 0)
+        if new_pos < old_pos:  # Wrapped around the board
+            self.cash[player] += 400  # Bonus for passing GO
+        
         return new_pos
     
     def can_buy_property(self, player: int, prop: Property) -> bool:

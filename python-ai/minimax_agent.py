@@ -54,25 +54,45 @@ class ExpectiminimaxAgent:
         # Get property at current position
         pos = state.positions[self.player_id]
         prop = state.get_property_at(pos)
+        opponent = 1 - self.player_id
         
-        # Quick heuristic: if we can afford and have enough cash buffer, lean towards buying
         if prop and prop.owner is None:
             cash_after = state.cash[self.player_id] - prop.price
-            
-            # Always buy if it completes a monopoly
             my_props = state.get_player_properties(self.player_id)
-            same_color = [p for p in my_props if p.color == prop.color]
+            opp_props = state.get_player_properties(opponent)
+            
+            # Count properties of same color
+            same_color_mine = [p for p in my_props if p.color == prop.color]
+            same_color_opp = [p for p in opp_props if p.color == prop.color]
             total_same_color = len([p for p in state.properties if p.color == prop.color])
             
-            if len(same_color) == total_same_color - 1:
-                return "BUY"  # Complete the monopoly!
+            # ALWAYS buy if it completes a monopoly
+            if len(same_color_mine) == total_same_color - 1:
+                return "BUY"
             
-            # Buy if we have a reasonable cash buffer
-            if cash_after >= 200:
-                # Use deeper search only when it's a close decision
-                pass  # Continue to minimax evaluation
-            elif cash_after >= 100 and prop.price <= 150:
-                return "BUY"  # Cheap property, go for it
+            # ALWAYS buy to block opponent from completing monopoly
+            if len(same_color_opp) >= total_same_color - 2:
+                if cash_after >= 50:  # Buy even with low cash to block
+                    return "BUY"
+            
+            # Strategic buying based on cash position
+            # Minimum cash reserve based on opponent's potential fares
+            max_opp_fare = max([p.fare for p in opp_props], default=0) * 2  # Could be doubled
+            safe_reserve = max(100, max_opp_fare)
+            
+            # Aggressive early game (few properties sold)
+            unsold = len(state.get_unowned_properties())
+            if unsold > 25:  # Early game - be aggressive
+                if cash_after >= 50:
+                    return "BUY"
+            elif unsold > 15:  # Mid game
+                if cash_after >= safe_reserve:
+                    return "BUY"
+                elif prop.price <= 100 and cash_after >= 50:  # Cheap properties
+                    return "BUY"
+            else:  # Late game - be more conservative
+                if cash_after >= safe_reserve * 1.5:
+                    return "BUY"
         
         self.nodes_evaluated = 0
         best_action = "SKIP"

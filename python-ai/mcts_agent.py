@@ -210,26 +210,50 @@ class MCTSAgent:
     
     def _simulation_policy(self, state: GameState, player: int, prop) -> bool:
         """
-        Default policy for simulation: smart random with some heuristics.
+        Smart policy for simulation with strategic buying decisions.
         """
         if state.cash[player] < prop.price:
             return False
         
-        # Keep some cash reserve
         cash_after = state.cash[player] - prop.price
-        if cash_after < 100:
-            return random.random() < 0.3  # Low chance if would leave broke
-        
-        # Check if it would complete a color set
+        opponent = 1 - player
         player_props = state.get_player_properties(player)
-        same_color = [p for p in player_props if p.color == prop.color]
+        opp_props = state.get_player_properties(opponent)
+        
+        same_color_mine = [p for p in player_props if p.color == prop.color]
+        same_color_opp = [p for p in opp_props if p.color == prop.color]
         total_same_color = len([p for p in state.properties if p.color == prop.color])
         
-        if len(same_color) == total_same_color - 1:
-            return True  # Always buy to complete monopoly
+        # Always buy to complete monopoly
+        if len(same_color_mine) == total_same_color - 1:
+            return True
         
-        # Otherwise random with bias towards buying
-        return random.random() < 0.7
+        # Always buy to block opponent's monopoly
+        if len(same_color_opp) >= total_same_color - 2:
+            if cash_after >= 30:
+                return True
+        
+        # Calculate risk-adjusted reserve
+        max_opp_fare = max([p.fare for p in opp_props], default=0) * 2
+        safe_reserve = max(80, max_opp_fare)
+        
+        # Early game: aggressive buying
+        unsold = len(state.get_unowned_properties())
+        if unsold > 25:
+            if cash_after >= 30:
+                return True
+            return random.random() < 0.6
+        
+        # Mid game: balanced
+        if unsold > 15:
+            if cash_after >= safe_reserve:
+                return True
+            return random.random() < 0.4
+        
+        # Late game: conservative
+        if cash_after >= safe_reserve * 1.5:
+            return True
+        return random.random() < 0.2
     
     def _calculate_reward(self, state: GameState) -> float:
         """
