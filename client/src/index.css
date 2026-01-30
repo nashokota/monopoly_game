@@ -1,0 +1,610 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh;
+  color: #e0e0e0;
+}
+
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  padding: 20px 0 30px;
+}
+
+.header h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: 2.5rem;
+  background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: #a0a0a0;
+  font-size: 1rem;
+}
+
+/* Game Setup */
+.game-setup {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.agent-selection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.agent-card {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  border: 2px solid transparent;
+}
+
+.agent-card.player-0 {
+  border-color: #00d4ff;
+}
+
+.agent-card.player-1 {
+  border-color: #ff6b6b;
+}
+
+.agent-card h3 {
+  font-family: 'Orbitron', monospace;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.player-dot.player-0 {
+  background: #00d4ff;
+  box-shadow: 0 0 10px #00d4ff;
+}
+
+.player-dot.player-1 {
+  background: #ff6b6b;
+  box-shadow: 0 0 10px #ff6b6b;
+}
+
+.agent-card select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.agent-card select:focus {
+  outline: none;
+  border-color: #00d4ff;
+}
+
+.agent-description {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  margin-top: 10px;
+}
+
+.start-button {
+  width: 100%;
+  padding: 15px 30px;
+  font-family: 'Orbitron', monospace;
+  font-size: 1.2rem;
+  background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.start-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+}
+
+.start-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Game Container */
+.game-container {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 30px;
+}
+
+/* Game Board */
+.board-container {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  grid-template-rows: repeat(11, 1fr);
+  gap: 2px;
+  aspect-ratio: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.tile {
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-size: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 2px;
+  transition: transform 0.2s;
+  cursor: pointer;
+  min-height: 50px;
+}
+
+.tile:hover {
+  transform: scale(1.05);
+  z-index: 10;
+}
+
+.tile.property {
+  border-left: 4px solid;
+}
+
+.tile.gamble {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+}
+
+.tile-name {
+  font-size: 0.5rem;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.tile-price {
+  font-size: 0.5rem;
+  color: #7fff00;
+  font-weight: bold;
+}
+
+.player-marker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  z-index: 5;
+}
+
+.player-marker.player-0 {
+  background: #00d4ff;
+  top: 2px;
+  left: 2px;
+}
+
+.player-marker.player-1 {
+  background: #ff6b6b;
+  bottom: 2px;
+  right: 2px;
+}
+
+.ownership-indicator {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+}
+
+.center-area {
+  grid-column: 2 / 11;
+  grid-row: 2 / 11;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+}
+
+.center-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.5rem;
+  background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 20px;
+}
+
+.dice-display {
+  font-size: 3rem;
+  margin: 10px 0;
+}
+
+.turn-info {
+  font-size: 0.9rem;
+  color: #a0a0a0;
+  text-align: center;
+}
+
+/* Side Panel */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-card h3 {
+  font-family: 'Orbitron', monospace;
+  margin-bottom: 15px;
+  font-size: 1rem;
+  color: #00d4ff;
+}
+
+/* Player Stats */
+.player-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.player-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.player-stat-row.player-0 {
+  border-left: 3px solid #00d4ff;
+}
+
+.player-stat-row.player-1 {
+  border-left: 3px solid #ff6b6b;
+}
+
+.player-stat-row.active {
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.stat-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.stat-avatar.player-0 {
+  background: rgba(0, 212, 255, 0.2);
+}
+
+.stat-avatar.player-1 {
+  background: rgba(255, 107, 107, 0.2);
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.stat-details {
+  font-size: 0.75rem;
+  color: #a0a0a0;
+}
+
+.stat-cash {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  color: #7fff00;
+}
+
+/* Controls */
+.game-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-btn {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.control-btn.primary {
+  background: linear-gradient(90deg, #00d4ff, #0099cc);
+  color: white;
+}
+
+.control-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.control-btn.danger {
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+  border: 1px solid #ff6b6b;
+}
+
+.control-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Game Log */
+.game-log {
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+}
+
+.log-entry {
+  padding: 8px;
+  margin-bottom: 5px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border-left: 3px solid #444;
+}
+
+.log-entry.player-0 {
+  border-left-color: #00d4ff;
+}
+
+.log-entry.player-1 {
+  border-left-color: #ff6b6b;
+}
+
+.log-turn {
+  color: #666;
+  font-size: 0.7rem;
+}
+
+/* Game Over Overlay */
+.game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.game-over-modal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  border: 2px solid #00d4ff;
+  max-width: 500px;
+  width: 90%;
+}
+
+.game-over-modal h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  background: linear-gradient(90deg, #ffd700, #ff8c00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.winner-display {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+}
+
+.winner-display .player-name {
+  font-family: 'Orbitron', monospace;
+  color: #00d4ff;
+}
+
+.final-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.final-stat-card {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.final-stat-card h4 {
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  color: #a0a0a0;
+}
+
+.final-stat-card .value {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.5rem;
+  color: #7fff00;
+}
+
+/* Simulation Mode */
+.simulation-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 30px;
+  margin-top: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.simulation-panel h3 {
+  font-family: 'Orbitron', monospace;
+  margin-bottom: 20px;
+  color: #7b2cbf;
+}
+
+.sim-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sim-controls input {
+  width: 100px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 1rem;
+}
+
+.sim-results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.sim-result-card {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.sim-result-card h4 {
+  margin-bottom: 10px;
+  color: #a0a0a0;
+}
+
+.win-rate {
+  font-family: 'Orbitron', monospace;
+  font-size: 2rem;
+}
+
+.win-rate.high {
+  color: #7fff00;
+}
+
+.win-rate.low {
+  color: #ff6b6b;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(0, 212, 255, 0.3);
+  border-top-color: #00d4ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .game-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .side-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .agent-selection {
+    grid-template-columns: 1fr;
+  }
+  
+  .side-panel {
+    grid-template-columns: 1fr;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+  }
+}
