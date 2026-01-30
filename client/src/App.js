@@ -35,25 +35,32 @@ const Tile = ({ tile, players, currentPlayer }) => {
   const player0Here = players[0] === tile.index;
   const player1Here = players[1] === tile.index;
 
+  // Determine background color based on ownership
+  let backgroundColor = 'rgba(255, 255, 255, 0.1)'; // Default
+  if (tile.owner === 0) {
+    backgroundColor = 'rgba(0, 212, 255, 0.4)'; // Blue for player 0
+  } else if (tile.owner === 1) {
+    backgroundColor = 'rgba(255, 107, 107, 0.4)'; // Red for player 1
+  } else if (tile.type === 'gamble') {
+    backgroundColor = 'linear-gradient(135deg, #ffd700, #ff8c00)';
+  }
+
   const style = {
     gridRow: pos.row,
     gridColumn: pos.col,
-    borderLeftColor: tile.hex || '#444'
+    borderLeftColor: tile.hex || '#444',
+    background: backgroundColor,
+    border: tile.owner === 0 ? '2px solid #00d4ff' : tile.owner === 1 ? '2px solid #ff6b6b' : 'none'
   };
 
   return (
     <div 
-      className={`tile ${tile.type}`}
+      className={`tile ${tile.type} ${tile.owner === 0 ? 'owned-blue' : ''} ${tile.owner === 1 ? 'owned-red' : ''}`}
       style={style}
-      title={`${tile.name}${tile.price ? ` - $${tile.price}` : ''}`}
+      title={`${tile.name}${tile.price ? ` - $${tile.price}` : ''}${tile.owner !== undefined && tile.owner !== null ? ` (Owned by Player ${tile.owner + 1})` : ''}`}
     >
       <div className="tile-name">{tile.name.split(' ').slice(-2).join(' ')}</div>
       {tile.price && <div className="tile-price">${tile.price}</div>}
-      {tile.owner !== undefined && tile.owner !== null && (
-        <div className="ownership-indicator">
-          {tile.owner === 0 ? '🔵' : '🔴'}
-        </div>
-      )}
       {player0Here && <div className="player-marker player-0" />}
       {player1Here && <div className="player-marker player-1" />}
     </div>
